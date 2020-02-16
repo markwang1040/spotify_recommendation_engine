@@ -12,8 +12,8 @@ import base64
 from collections import MutableMapping 
 
 # Global variables
-CLIENT_ID = "1d074dccb268434b86d564fc3c49c040"
-CLIENT_SECRET = "9c74275903e64f8c9bcc9dfd9195e0ff"
+CLIENT_ID = "1d0..."
+CLIENT_SECRET = "9c7..."
 
 auth_hash = str(random.getrandbits(128)) # move this somewhere else, should not be global
 
