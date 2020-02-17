@@ -13,7 +13,7 @@ from collections import MutableMapping
 from random import randrange
 
 # Global variables
-import client_info # .py file that includes CLIENT_ID and CLIENT_LIMIT
+from client_info import * # .py file that includes CLIENT_ID and CLIENT_LIMIT
 
 auth_hash = str(random.getrandbits(128)) # move this somewhere else, should not be global
 
