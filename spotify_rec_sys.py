@@ -4,13 +4,14 @@ from pandas.io.json import json_normalize
 import requests
 import json
 import random
+from random import choice, randrange
 import urllib
 import urllib.parse
 from pprint import pprint
 import webbrowser
 import base64
 from collections import MutableMapping 
-from random import randrange
+import string
 
 # Global variables
 from client_info import * # .py file that includes CLIENT_ID and CLIENT_LIMIT
