@@ -10,10 +10,12 @@ from pprint import pprint
 import webbrowser
 import base64
 from collections import MutableMapping 
+import string
+from random import randrange, choice
 
 # Global variables
-CLIENT_ID = "1d0..."
-CLIENT_SECRET = "9c7..."
+CLIENT_ID = "..."
+CLIENT_SECRET = "..."
 
 auth_hash = str(random.getrandbits(128)) # move this somewhere else, should not be global
 
@@ -276,6 +278,131 @@ def populate_album_genres(cleaned_master_user_profile):
         artist_genres = artist_info_dict["genres"]
         album.update(genres = artist_genres) 
 
+def get_categories_list():
+    # request list of categories
+    get_token(auth_json)
+    headers = {
+        'Accept':'application/json',
+        'Content-Type':'application/json',
+        'Authorization':'Bearer {}'.format(refreshed_token)
+        }
+    endpoint = "https://api.spotify.com/v1/browse/categories?limit=50"
+    url = endpoint
+    categories = requests.get(url=url, headers=headers)
+    categories_dict = json.loads(categories.text)
+    if "next" in categories_dict and categories_dict["next"] is not None:
+        more_categories_url = categories_dict["next"] 
+        while  more_categories_url is not None:
+            get_token(auth_json)
+            # grab more categories if total > limit=50
+            headers = {
+                'Accept':'application/json',
+                'Content-Type':'application/json',
+                'Authorization':'Bearer {}'.format(refreshed_token)
+                }
+            more_categories = requests.get(url=more_categories_url, headers=headers) #
+            more_categories_dict = json.loads(more_categories.text) # 
+            more_categories_url = more_categories_dict["next"] 
+            categories_dict["items"].extend(more_categories_dict["items"])
+    global categories_list
+    categories_list = [item["id"] for item in categories_dict["categories"]["items"]]
+
+def get_genres_list():
+    # request list of categories
+    get_token(auth_json)
+    headers = {
+        'Accept':'application/json',
+        'Content-Type':'application/json',
+        'Authorization':'Bearer {}'.format(refreshed_token)
+        }
+    endpoint = "https://api.spotify.com/v1/recommendations/available-genre-seeds"
+    url = endpoint
+    genres = requests.get(url=url, headers=headers)
+    global genres_list
+    genres_list = json.loads(genres.text)["genres"]
+
+def get_random_track_info():
+    # get all relevant information about a random track
+    get_token(auth_json)
+    headers = {
+        'Accept':'application/json',
+        'Content-Type':'application/json',
+        'Authorization':'Bearer {}'.format(refreshed_token)
+        }
+    search_endpoint = "https://api.spotify.com/v1/search"
+    search_param = {
+        "q":"%" + choice(string.ascii_letters) + "%",
+        "type":"track",
+        "market":"from_token",
+        "limit":"1",
+        "offset":str(randrange(5000)+1)
+    }
+    track_url = search_endpoint + "?" + "&".join([key+"="+val for key, val in search_param.items()])
+    random_track = requests.get(url=track_url, headers=headers)
+    random_track_dict = json.loads(random_track.text)
+    
+    # get album info
+    album_endpoint = "https://api.spotify.com/v1/albums/"
+    album_url = album_endpoint + random_track_dict["tracks"]["items"][0]["album"]["uri"].split(":")[2]
+    album_info = requests.get(url=album_url, headers=headers)
+    album_info_dict = json.loads(album_info.text)
+    
+    # get artist info
+    album_artist_uri = random_track_dict["tracks"]["items"][0]["artists"][0]["uri"]
+    artist_enpoint = "https://api.spotify.com/v1/artists/"
+    artist_url = artist_enpoint + album_artist_uri.split(":")[2]
+    artist_info =  requests.get(url=artist_url, headers=headers)
+    artist_info_dict = json.loads(artist_info.text)
+
+    # get track audio features
+    track_uri = random_track_dict["tracks"]["items"][0]["uri"].split(":")[2]
+    audio_features_endpoint = "https://api.spotify.com/v1/audio-features/"
+    audio_features_url = audio_features_endpoint + track_uri
+    audio_features = requests.get(url=audio_features_url, headers=headers)
+    global audio_features_dict
+    audio_features_dict = json.loads(audio_features.text)
+    
+    # get track audio analysis
+    audio_analysis_endpoint = "https://api.spotify.com/v1/audio-analysis/"
+    audio_analysis_url = audio_analysis_endpoint + track_uri
+    audio_analysis = requests.get(url=audio_analysis_url, headers=headers)
+    global audio_analysis_dict
+    audio_analysis_dict = json.loads(audio_analysis.text)    
+    
+    cleaned_random_track_dict = {
+        "album_uri":random_track_dict["tracks"]["items"][0]["album"]["uri"],
+        "album_label":album_info_dict["label"],
+        "album_name":album_info_dict["name"],
+        "album_popularity":album_info_dict["popularity"],
+        "album_release_date":album_info_dict["release_date"],
+        "artist_uri":random_track_dict["tracks"]["items"][0]["artists"][0]["uri"],
+        "artist_name":artist_info_dict["name"],
+        "artist_popularity":artist_info_dict["popularity"],
+        "artist_followers":artist_info_dict["followers"]["total"],
+        "duration_ms":random_track_dict["tracks"]["items"][0]["duration_ms"],
+        "explicit":random_track_dict["tracks"]["items"][0]["explicit"],
+        "name":random_track_dict["tracks"]["items"][0]["name"],
+        "popularity":random_track_dict["tracks"]["items"][0]["popularity"],
+        "track_number":random_track_dict["tracks"]["items"][0]["track_number"],
+        "uri":random_track_dict["tracks"]["items"][0]["uri"],
+        "genre":artist_info_dict["genres"],
+        "duration_ms":audio_features_dict["duration_ms"],
+        "key" : audio_features_dict["key"],
+        "mode" : audio_features_dict["mode"],
+        "time_signature" : audio_features_dict["time_signature"],
+        "acousticness" : audio_features_dict["acousticness"],
+        "danceability" : audio_features_dict["danceability"],
+        "energy" : audio_features_dict["energy"],
+        "instrumentalness" : audio_features_dict["instrumentalness"],
+        "liveness" : audio_features_dict["liveness"],
+        "loudness" : audio_features_dict["loudness"],
+        "speechiness" : audio_features_dict["speechiness"],
+        "valence" : audio_features_dict["valence"],
+        "tempo" : audio_features_dict["tempo"]
+    }
+    
+    return cleaned_random_track_dict
+
 
 def main():
     user_auth()
@@ -287,6 +414,8 @@ def main():
     populate_album_genres(cleaned_master_user_profile)
     print("Populated albums with genres.")
     print("The Spotify profile contains the following elements:\n", cleaned_master_user_profile.keys())
+    get_genres_list()
+    print("Requested genres_list")
 
 
 if __name__ == "__main__":
