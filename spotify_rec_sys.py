@@ -10,12 +10,11 @@ from pprint import pprint
 import webbrowser
 import base64
 from collections import MutableMapping 
-import string
-from random import randrange, choice
+from random import randrange
 
 # Global variables
-CLIENT_ID = "..."
-CLIENT_SECRET = "..."
+CLIENT_ID = "REDACTED"
+CLIENT_SECRET = "REDACTED"
 
 auth_hash = str(random.getrandbits(128)) # move this somewhere else, should not be global
 
@@ -320,9 +319,9 @@ def get_genres_list():
     genres = requests.get(url=url, headers=headers)
     global genres_list
     genres_list = json.loads(genres.text)["genres"]
-
+    
 def get_random_track_info():
-    # get all relevant information about a random track
+    # returns all relevant info of one song
     get_token(auth_json)
     headers = {
         'Accept':'application/json',
@@ -370,6 +369,8 @@ def get_random_track_info():
     audio_analysis_dict = json.loads(audio_analysis.text)    
     
     cleaned_random_track_dict = {
+        "name":random_track_dict["tracks"]["items"][0]["name"],
+        "uri":random_track_dict["tracks"]["items"][0]["uri"],
         "album_uri":random_track_dict["tracks"]["items"][0]["album"]["uri"],
         "album_label":album_info_dict["label"],
         "album_name":album_info_dict["name"],
@@ -381,28 +382,42 @@ def get_random_track_info():
         "artist_followers":artist_info_dict["followers"]["total"],
         "duration_ms":random_track_dict["tracks"]["items"][0]["duration_ms"],
         "explicit":random_track_dict["tracks"]["items"][0]["explicit"],
-        "name":random_track_dict["tracks"]["items"][0]["name"],
         "popularity":random_track_dict["tracks"]["items"][0]["popularity"],
         "track_number":random_track_dict["tracks"]["items"][0]["track_number"],
-        "uri":random_track_dict["tracks"]["items"][0]["uri"],
         "genre":artist_info_dict["genres"],
-        "duration_ms":audio_features_dict["duration_ms"],
-        "key" : audio_features_dict["key"],
-        "mode" : audio_features_dict["mode"],
-        "time_signature" : audio_features_dict["time_signature"],
-        "acousticness" : audio_features_dict["acousticness"],
-        "danceability" : audio_features_dict["danceability"],
-        "energy" : audio_features_dict["energy"],
-        "instrumentalness" : audio_features_dict["instrumentalness"],
-        "liveness" : audio_features_dict["liveness"],
-        "loudness" : audio_features_dict["loudness"],
-        "speechiness" : audio_features_dict["speechiness"],
-        "valence" : audio_features_dict["valence"],
-        "tempo" : audio_features_dict["tempo"]
+        "acousticness":audio_features_dict["acousticness"],
+        "danceability":audio_features_dict["danceability"],
+        "energy":audio_features_dict["energy"],
+        "instrumentalness":audio_features_dict["instrumentalness"],
+        "liveness":audio_features_dict["liveness"],
+        "loudness":audio_features_dict["loudness"],
+        "speechiness":audio_features_dict["speechiness"],
+        "valence":audio_features_dict["valence"],
+        "tempo":audio_features_dict["tempo"],
+        "tempo_confidence":audio_analysis_dict["track"]["tempo_confidence"],
+        "overall_key":audio_features_dict["key"],
+        "overall_key_confidence":audio_analysis_dict["track"]["key_confidence"],
+        "mode":audio_features_dict["mode"],
+        "mode_confidence":audio_analysis_dict["track"]["mode_confidence"],
+        "time_signature":audio_features_dict["time_signature"],
+        "time_signature_confidence":audio_analysis_dict["track"]["time_signature_confidence"],
+        "num_of_sections":len(audio_analysis_dict["sections"]),
+        "section_durations":[section["duration"] for section in audio_analysis_dict["sections"]],
+        "section_loudnesses":[section["loudness"] for section in audio_analysis_dict["sections"]],
+        "section_tempos":[section["tempo"] for section in audio_analysis_dict["sections"]],
+        "section_tempo_confidences":[section["tempo_confidence"] for section in audio_analysis_dict["sections"]],
+        "num_of_keys":len(set([section["key"] for section in audio_analysis_dict["sections"]])),
+        "section_keys":[section["key"] for section in audio_analysis_dict["sections"]],
+        "section_key_confidences":[section["key_confidence"] for section in audio_analysis_dict["sections"]],
+        "num_of_modes":len(set([section["mode"] for section in audio_analysis_dict["sections"]])),
+        "section_modes":[section["mode"] for section in audio_analysis_dict["sections"]],
+        "section_mode_confidences":[section["mode_confidence"] for section in audio_analysis_dict["sections"]],
+        "num_of_time_signatures": len(set([section["time_signature"] for section in audio_analysis_dict["sections"]])),
+        "section_time_signatures":[section["time_signature"] for section in audio_analysis_dict["sections"]],
+        "section_time_signature_confidences":[section["time_signature_confidence"] for section in audio_analysis_dict["sections"]]
     }
-    
     return cleaned_random_track_dict
-
+    
 
 def main():
     user_auth()
@@ -416,7 +431,9 @@ def main():
     print("The Spotify profile contains the following elements:\n", cleaned_master_user_profile.keys())
     get_genres_list()
     print("Requested genres_list")
-
+    print("Random track and info: \n")
+    get_random_track_info()
+    
 
 if __name__ == "__main__":
     main()
