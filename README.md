@@ -14,4 +14,12 @@ This is a work in progress for the Master's Data Mining course at the University
 
   Note that the Spotify API does not provide genres with albums as noted in [this thread on GitHub](https://github.com/spotify/web-api/issues/157). With the assumption that the artists album admits the same genre as the artist, the script populates the album genre field with the artist's genre.
 
-	This script also includes the script to pull one random track and all relevant data regarding the track, artist, album, its audio features and extensive audio analysis. 
+	This script also includes the script to pull one random track and all relevant data regarding the track, artist, album, its audio features and extensive audio analysis.
+
+## Getting Started
+
+1. Create a file `client_info.py` that defines the variables `CLIENT_ID` and `CLIENT_SECRET`.
+2. Install the listed packages prior to executing `spotify_rec_sys.py`.
+
+## Author
+- **Benedict Au** - [Github](https://github.com/benedictau1993/)
