@@ -14,6 +14,7 @@ from collections import MutableMapping
 import string
 import time
 import tqdm
+import os
 
 
 # Global variables
@@ -518,21 +519,21 @@ def get_20_random_tracks_info(requests_counter_init):
             "popularity":random_track_dict["tracks"]["items"][i]["popularity"],
             "track_number":random_track_dict["tracks"]["items"][i]["track_number"],
             "genre":artist_info_dict["artists"][i]["genres"],
-            "acousticness":audio_features_dict["audio_features"][i]["acousticness"] if audio_features_dict["audio_features"] is not None else "None",
-            "danceability":audio_features_dict["audio_features"][i]["danceability"] if audio_features_dict["audio_features"] is not None else "None",
-            "energy":audio_features_dict["audio_features"][i]["energy"] if audio_features_dict["audio_features"] is not None else "None",
-            "instrumentalness":audio_features_dict["audio_features"][i]["instrumentalness"] if audio_features_dict["audio_features"] is not None else "None",
-            "liveness":audio_features_dict["audio_features"][i]["liveness"] if audio_features_dict["audio_features"] is not None else "None",
-            "loudness":audio_features_dict["audio_features"][i]["loudness"] if audio_features_dict["audio_features"] is not None else "None",
-            "speechiness":audio_features_dict["audio_features"][i]["speechiness"] if audio_features_dict["audio_features"] is not None else "None",
-            "valence":audio_features_dict["audio_features"][i]["valence"] if audio_features_dict["audio_features"] is not None else "None",
-            "tempo":audio_features_dict["audio_features"][i]["tempo"] if audio_features_dict["audio_features"] is not None else "None",
+            "acousticness":audio_features_dict["audio_features"][i]["acousticness"] if audio_features_dict["audio_features"][i] is not None else "None",
+            "danceability":audio_features_dict["audio_features"][i]["danceability"] if audio_features_dict["audio_features"][i] is not None else "None",
+            "energy":audio_features_dict["audio_features"][i]["energy"] if audio_features_dict["audio_features"][i] is not None else "None",
+            "instrumentalness":audio_features_dict["audio_features"][i]["instrumentalness"] if audio_features_dict["audio_features"][i] is not None else "None",
+            "liveness":audio_features_dict["audio_features"][i]["liveness"] if audio_features_dict["audio_features"][i] is not None else "None",
+            "loudness":audio_features_dict["audio_features"][i]["loudness"] if audio_features_dict["audio_features"][i] is not None else "None",
+            "speechiness":audio_features_dict["audio_features"][i]["speechiness"] if audio_features_dict["audio_features"][i] is not None else "None",
+            "valence":audio_features_dict["audio_features"][i]["valence"] if audio_features_dict["audio_features"][i] is not None else "None",
+            "tempo":audio_features_dict["audio_features"][i]["tempo"] if audio_features_dict["audio_features"][i] is not None else "None",
             "tempo_confidence":audio_analysis_dict["track"]["tempo_confidence"] if audio_analysis_dict is not None else "None",
-            "overall_key":audio_features_dict["audio_features"][i]["key"] if audio_features_dict["audio_features"] is not None else "None",
+            "overall_key":audio_features_dict["audio_features"][i]["key"] if audio_features_dict["audio_features"][i] is not None else "None",
             "overall_key_confidence":audio_analysis_dict["track"]["key_confidence"] if audio_analysis_dict is not None else "None",
-            "mode":audio_features_dict["audio_features"][i]["mode"] if audio_features_dict["audio_features"] is not None else "None",
+            "mode":audio_features_dict["audio_features"][i]["mode"] if audio_features_dict["audio_features"][i] is not None else "None",
             "mode_confidence":audio_analysis_dict["track"]["mode_confidence"] if audio_analysis_dict is not None else "None",
-            "time_signature":audio_features_dict["audio_features"][i]["time_signature"] if audio_features_dict["audio_features"] is not None else "None",
+            "time_signature":audio_features_dict["audio_features"][i]["time_signature"] if audio_features_dict["audio_features"][i] is not None else "None",
             "time_signature_confidence":audio_analysis_dict["track"]["time_signature_confidence"] if audio_analysis_dict is not None else "None",
             "num_of_sections":len(audio_analysis_dict["sections"]) if audio_analysis_dict is not None else "None",
             "section_durations":[section["duration"] for section in audio_analysis_dict["sections"]] if audio_analysis_dict is not None else "None",
@@ -552,7 +553,7 @@ def get_20_random_tracks_info(requests_counter_init):
         cleaned_20_random_track_dicts_list.append(cleaned_random_track_dict)
         
     return requests_counter, cleaned_20_random_track_dicts_list
-
+        
 
 user_auth()
 print("Spotify user authorized.")
@@ -567,15 +568,17 @@ get_genres_list()
 print("Object created: genres_list")
 
 
+start_time = time.time()
 requests_counter_init = 0
 tracks_collection = []
-start_time = time.time()
 for i in range(100):
-    print(requests_counter_init)
+    split_time = time.time()
+    print("Iteration:", i, "total requests:", requests_counter_init, "runtime (min):", round((split_time - start_time)/60))
     requests_counter_init, tracks_info = get_20_random_tracks_info(requests_counter_init)
-    tracks_collection.extend(tracks_info)
+    with open('scraped_tracks.txt', 'a') as f:
+        for item in tracks_info:
+            f.write("%s\n" % item)
 print(requests_counter_init)
 end_time = time.time()
 print(round(end_time - start_time))
-
 
