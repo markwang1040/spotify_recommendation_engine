@@ -12,10 +12,8 @@ import webbrowser
 import base64
 from collections import MutableMapping 
 import string
-import time
-import tqdm
 import os
-
+import time
 
 # Global variables
 from client_info import * # .py file that includes CLIENT_ID and CLIENT_LIMIT
@@ -342,6 +340,7 @@ def get_random_track_info():
     }
     track_url = search_endpoint + "?" + "&".join([key+"="+val for key, val in search_param.items()])
     random_track = requests.get(url=track_url, headers=headers)
+    global random_track_dict
     random_track_dict = json.loads(random_track.text)
     
     # get album info
@@ -362,12 +361,14 @@ def get_random_track_info():
     audio_features_endpoint = "https://api.spotify.com/v1/audio-features/"
     audio_features_url = audio_features_endpoint + track_uri
     audio_features = requests.get(url=audio_features_url, headers=headers)
+    global audio_features_dict
     audio_features_dict = json.loads(audio_features.text)
     
     # get track audio analysis
     audio_analysis_endpoint = "https://api.spotify.com/v1/audio-analysis/"
     audio_analysis_url = audio_analysis_endpoint + track_uri
     audio_analysis = requests.get(url=audio_analysis_url, headers=headers)
+    global audio_analysis_dict
     audio_analysis_dict = json.loads(audio_analysis.text)    
     
     cleaned_random_track_dict = {
@@ -436,14 +437,17 @@ def get_20_random_tracks_info(requests_counter_init):
         "type":"track",
         "market":"from_token",
         "limit":"20",
-        "offset":str(randrange(5000)+1)
+        "offset":str(randrange(4979)+1)
     }
+    global track_url
     track_url = search_endpoint + "?" + "&".join([key+"="+val for key, val in search_param.items()])
     global random_track
     random_track = requests.get(url=track_url, headers=headers)
     requests_counter += 1
     if random_track.status_code != 200:
         print("Exception: Response", random_track.status_code, "at requests_counter =", requests_counter, "at random_track")
+        print("Track url in question:", track_url)
+        print(json.loads(random_track.text))
         raise
     global random_track_dict
     random_track_dict = json.loads(random_track.text)
@@ -553,7 +557,7 @@ def get_20_random_tracks_info(requests_counter_init):
         cleaned_20_random_track_dicts_list.append(cleaned_random_track_dict)
         
     return requests_counter, cleaned_20_random_track_dicts_list
-        
+
 
 user_auth()
 print("Spotify user authorized.")
@@ -571,13 +575,14 @@ print("Object created: genres_list")
 start_time = time.time()
 requests_counter_init = 0
 tracks_collection = []
-for i in range(100):
+for i in range(200):
     split_time = time.time()
     print("Iteration:", i, "total requests:", requests_counter_init, "runtime (min):", round((split_time - start_time)/60))
     requests_counter_init, tracks_info = get_20_random_tracks_info(requests_counter_init)
     with open('scraped_tracks.txt', 'a') as f:
         for item in tracks_info:
             f.write("%s\n" % item)
+    # tracks_collection.extend(tracks_info)
 print(requests_counter_init)
 end_time = time.time()
 print(round(end_time - start_time))
