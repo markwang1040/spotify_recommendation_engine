@@ -18,7 +18,7 @@ This is a work in progress for the Master's Data Mining course at the University
 
  2. Pulls and wrangles one random track and all relevant data regarding the track, artist, album, its audio features and extensive audio analysis
 
- 3. Pulls and wrangles 20 random tracks at a time and all relevant data - an scaled-up version of (2). Handles event when tracks that have no audio_features or audio_analysis. Appends requested tracks to file.
+ 3. Pulls and wrangles 20 random tracks at a time and all relevant data - an scaled-up version of (2). Handles event when tracks that have no audio_features or audio_analysis (0.163% of tracks). Appends requested tracks to file.
 
 ## Getting Started
 
