@@ -14,14 +14,12 @@ from collections import MutableMapping
 import string
 import os
 import time
+from math import floor
 
 # Global variables
 from client_info import * # .py file that includes CLIENT_ID and CLIENT_LIMIT
 
-auth_hash = str(random.getrandbits(128)) # move this somewhere else, should not be global
-
 redirect_uri = "https://example.com/callback"
-
 scopes_list = ["ugc-image-upload", 
     "user-read-playback-state", 
     "user-modify-playback-state", 
@@ -41,9 +39,7 @@ scopes_list = ["ugc-image-upload",
     "user-follow-read", 
     "user-follow-modify"
 ]
-
 scope_string = '%20'.join(scopes_list)
-
 # user_data_dict endpoint:"https://api.spotify.com/v1/me/"
 user_data_dict = {
     "profile":"",
@@ -72,14 +68,14 @@ def user_auth():
     options_dict = {"client_id":CLIENT_ID,
         "response_type":"code",
         "redirect_uri":urllib.parse.quote_plus(redirect_uri),
-        "state":auth_hash,
+        "state":str(random.getrandbits(128)),
         "scope":scope_string,
         "show_dialog":"true"
         }
     endpoint = "https://accounts.spotify.com/authorize"
     r = requests.get(endpoint + "?" + "&".join([key + "=" + value for key, value in options_dict.items()]), allow_redirects=True)
     webbrowser.open(r.url) 
-    callback_url = input("Enter your the URL provided upon authentication:")
+    callback_url = input("Enter the callback URL provided upon authentication: ")
     code = callback_url.strip("https://example.com/callback?code=").split("&state=")[0]
     state = callback_url.strip("https://example.com/callback?code=").split("&state=")[1]
     auth_str = '{}:{}'.format(CLIENT_ID, CLIENT_SECRET)
@@ -100,7 +96,7 @@ def get_token(auth_json):
     b64_client_auth_str = base64.b64encode(client_auth_str.encode()).decode()
     header = {'Authorization':'Basic {}'.format(b64_client_auth_str)}
     data = {"grant_type":"refresh_token", "refresh_token":auth_json["refresh_token"]}
-    
+    global refresh
     refresh = requests.post('https://accounts.spotify.com/api/token', headers=header, data=data)
     refresh_json = json.loads(refresh.text)
     global refreshed_token
@@ -140,7 +136,7 @@ def get_master_user_profile():
     master_user_profile = {key:get_user_data(key) for key in user_data_dict}
 
 def clean_master_user_profile(master_user_profile):
-    # cleans dict
+    # cleans master user profile dict
     profile = {
         key:val for key, val in master_user_profile["profile"].items() 
                if key in ["country", "explicit_content", "uri"]
@@ -323,7 +319,7 @@ def get_genres_list():
     genres_list = json.loads(genres.text)["genres"]
     
 def get_random_track_info():
-    # returns all relevant info of one song
+    # returns all relevant info of ONE song
     get_token(auth_json)
     headers = {
         'Accept':'application/json',
@@ -422,7 +418,7 @@ def get_random_track_info():
     return cleaned_random_track_dict
 
 def get_20_random_tracks_info(requests_counter_init):
-    # returns all relevant info of 50 songs
+    # returns all relevant info of TWENTY songs
     get_token(auth_json)
     requests_counter = 0 + requests_counter_init
     requests_counter += 1
@@ -569,20 +565,24 @@ populate_album_genres(cleaned_master_user_profile)
 print("Populated albums with genres.")
 print("The Spotify profile contains the following elements:\n", cleaned_master_user_profile.keys())
 get_genres_list()
-print("Object created: genres_list")
+print("Object created: genres_list\n")
 
 
+print("Sampling tracks from Spotify's library:\n")
 start_time = time.time()
 requests_counter_init = 0
 tracks_collection = []
 i = 0
 while True:
     split_time = time.time()
-    print("Iteration:", i, "total requests:", requests_counter_init, "runtime (min):", round((split_time - start_time)/60))
-    requests_counter_init, tracks_info = get_20_random_tracks_info(requests_counter_init)
+    print("\033[FIteration:", i, "    Sampled Tracks:", i*20, "    Total Requests:", requests_counter_init, "    Runtime (min):", floor((split_time - start_time)/60))
+    try:
+        requests_counter_init, tracks_info = get_20_random_tracks_info(requests_counter_init)
+    except:
+        continue
     with open('scraped_tracks.txt', 'a') as f:
         for item in tracks_info:
             f.write("%s\n" % item)
     i += 1
-    # tracks_collection.extend(tracks_info)
+
 
