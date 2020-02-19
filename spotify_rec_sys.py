@@ -575,15 +575,14 @@ print("Object created: genres_list")
 start_time = time.time()
 requests_counter_init = 0
 tracks_collection = []
-for i in range(200):
+i = 0
+while True:
     split_time = time.time()
     print("Iteration:", i, "total requests:", requests_counter_init, "runtime (min):", round((split_time - start_time)/60))
     requests_counter_init, tracks_info = get_20_random_tracks_info(requests_counter_init)
     with open('scraped_tracks.txt', 'a') as f:
         for item in tracks_info:
             f.write("%s\n" % item)
+    i += 1
     # tracks_collection.extend(tracks_info)
-print(requests_counter_init)
-end_time = time.time()
-print(round(end_time - start_time))
 
